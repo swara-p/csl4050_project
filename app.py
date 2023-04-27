@@ -35,7 +35,7 @@ def build_model(df):
     st.info(Y.name)
 
     # Build lazy model
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y,test_size = split_size,random_state = seed_number)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = split_size)
     reg = LazyRegressor(verbose=0,ignore_warnings=False, custom_metric=None)
     models_train,predictions_train = reg.fit(X_train, X_train, Y_train, Y_train)
     models_test,predictions_test = reg.fit(X_train, X_test, Y_train, Y_test)
@@ -132,11 +132,11 @@ with st.sidebar.header('1. Upload your CSV data'):
 [Example CSV input file](https://raw.githubusercontent.com/dataprofessor/data/master/delaney_solubility_with_descriptors.csv)
 """)
 
-# Sidebar - Specify parameter settings
-with st.sidebar.header('2. Set Parameters'):
-    split_size = st.sidebar.slider('Data split ratio (% for Training Set)', 10, 90, 80, 5)
-    seed_number = st.sidebar.slider('Set the random seed number', 1, 100, 42, 1)
+with st.sidebar.header('2. Choose your Task'):
+    task = st.sidebar.radio('Task', ('Regression', 'Classification'), horizontal=True, label_visibility='collapsed')
 
+with st.sidebar.header('3. Set Parameters'):
+    split_size = st.sidebar.slider('Data split ratio (% for Training Set)', 10, 90, 80, 5)
 
 #---------------------------------#
 # Main panel
