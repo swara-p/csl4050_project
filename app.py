@@ -1,10 +1,11 @@
 import streamlit as st
 import pandas as pd
-from lazypredict.Supervised import LazyRegressor
+import numpy as np
+from lazypredict.Supervised import LazyRegressor, LazyClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.datasets import load_diabetes
+from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, roc_auc_score, roc_curve, f1_score, classification_report, confusion_matrix
+from sklearn.datasets import load_diabetes, load_iris
 import matplotlib.pyplot as plt
 import seaborn as sns
 import base64
@@ -16,8 +17,8 @@ st.set_page_config(page_title='The Machine Learning Algorithm Comparison App',
     layout='wide')
 #---------------------------------#
 # Model building
+
 def build_model(df):
-    df = df.loc[:100] # FOR TESTING PURPOSE, COMMENT THIS OUT FOR PRODUCTION
     X = df.iloc[:,:-1] # Using all column except for the last column as X
     Y = df.iloc[:,-1] # Selecting the last column as Y
 
@@ -120,8 +121,6 @@ st.write("""
 # The Machine Learning Algorithm Comparison App
 
 In this implementation, the **lazypredict** library is used for building several machine learning models at once.
-
-Developed by: [Data Professor](http://youtube.com/dataprofessor)
 
 """)
 
