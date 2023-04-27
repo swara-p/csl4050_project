@@ -4,6 +4,7 @@ import numpy as np
 from lazypredict.Supervised import LazyRegressor, LazyClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, roc_auc_score, roc_curve, f1_score, classification_report, confusion_matrix
 from sklearn.datasets import load_diabetes, load_iris
 import matplotlib.pyplot as plt
@@ -22,6 +23,7 @@ def build_model(df):
     X = df.iloc[:,:-1] # Using all column except for the last column as X
     Y = df.iloc[:,-1] # Selecting the last column as Y
 
+
     st.markdown('**1.2. Dataset dimension**')
     st.write('X')
     st.info(X.shape)
@@ -35,10 +37,21 @@ def build_model(df):
     st.info(Y.name)
 
     # Build lazy model
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = split_size)
-    reg = LazyRegressor(verbose=0,ignore_warnings=False, custom_metric=None)
-    models_train,predictions_train = reg.fit(X_train, X_train, Y_train, Y_train)
-    models_test,predictions_test = reg.fit(X_train, X_test, Y_train, Y_test)
+    if task=="Classification":
+        le=LabelEncoder()
+        le.fit(Y)
+        Y=le.transform(Y)
+
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size = split_size)
+
+    if task=="Regression":
+        reg = LazyRegressor(verbose=0,ignore_warnings=False, custom_metric=None)
+        models_train,predictions_train = reg.fit(X_train, X_train, Y_train, Y_train)
+        models_test,predictions_test = reg.fit(X_train, X_test, Y_train, Y_test)
+    elif task=="Classification":
+        clf = LazyClassifier(verbose=0,ignore_warnings=True, custom_metric=None)
+        models_train,predictions_train = clf.fit(X_train, X_train,  Y_train, Y_train)
+        models_test,predictions_test = clf.fit(X_train, X_test, Y_train, Y_test)
 
     st.subheader('2. Table of Model Performance')
 
@@ -51,54 +64,103 @@ def build_model(df):
     st.markdown(filedownload(predictions_test,'test.csv'), unsafe_allow_html=True)
 
     st.subheader('3. Plot of Model Performance (Test set)')
+    if task=="Regression":
 
-
-    with st.markdown('**R-squared**'):
-        # Tall
-        predictions_test["R-Squared"] = [0 if i < 0 else i for i in predictions_test["R-Squared"] ]
-        plt.figure(figsize=(3, 9))
+        with st.markdown('**R-squared**'):
+            # Tall
+            predictions_test["R-Squared"] = [0 if i < 0 else i for i in predictions_test["R-Squared"] ]
+            plt.figure(figsize=(3, 9))
+            sns.set_theme(style="whitegrid")
+            ax1 = sns.barplot(y=predictions_test.index, x="R-Squared", data=predictions_test)
+            # ax1.set(xlim=(0, 1))
+        st.markdown(imagedownload(plt,'plot-r2-tall.pdf'), unsafe_allow_html=True)
+            # Wide
+        plt.figure(figsize=(9, 3))
         sns.set_theme(style="whitegrid")
-        ax1 = sns.barplot(y=predictions_test.index, x="R-Squared", data=predictions_test)
-        ax1.set(xlim=(0, 1))
-    st.markdown(imagedownload(plt,'plot-r2-tall.pdf'), unsafe_allow_html=True)
-        # Wide
-    plt.figure(figsize=(9, 3))
-    sns.set_theme(style="whitegrid")
-    ax1 = sns.barplot(x=predictions_test.index, y="R-Squared", data=predictions_test)
-    ax1.set(ylim=(0, 1))
-    plt.xticks(rotation=90)
-    st.pyplot(plt)
-    st.markdown(imagedownload(plt,'plot-r2-wide.pdf'), unsafe_allow_html=True)
+        ax1 = sns.barplot(x=predictions_test.index, y="R-Squared", data=predictions_test)
+        ax1.set(ylim=(0, 1))
+        plt.xticks(rotation=90)
+        st.pyplot(plt)
+        st.markdown(imagedownload(plt,'plot-r2-wide.pdf'), unsafe_allow_html=True)
 
-    with st.markdown('**RMSE (capped at 50)**'):
-        # Tall
-        predictions_test["RMSE"] = [50 if i > 50 else i for i in predictions_test["RMSE"] ]
-        plt.figure(figsize=(3, 9))
+        with st.markdown('**RMSE (capped at 200)**'):
+            # Tall
+            predictions_test["RMSE"] = [200 if i > 200 else i for i in predictions_test["RMSE"] ]
+            plt.figure(figsize=(3, 9))
+            sns.set_theme(style="whitegrid")
+            ax2 = sns.barplot(y=predictions_test.index, x="RMSE", data=predictions_test)
+        st.markdown(imagedownload(plt,'plot-rmse-tall.pdf'), unsafe_allow_html=True)
+            # Wide
+        plt.figure(figsize=(9, 3))
         sns.set_theme(style="whitegrid")
-        ax2 = sns.barplot(y=predictions_test.index, x="RMSE", data=predictions_test)
-    st.markdown(imagedownload(plt,'plot-rmse-tall.pdf'), unsafe_allow_html=True)
-        # Wide
-    plt.figure(figsize=(9, 3))
-    sns.set_theme(style="whitegrid")
-    ax2 = sns.barplot(x=predictions_test.index, y="RMSE", data=predictions_test)
-    plt.xticks(rotation=90)
-    st.pyplot(plt)
-    st.markdown(imagedownload(plt,'plot-rmse-wide.pdf'), unsafe_allow_html=True)
+        ax2 = sns.barplot(x=predictions_test.index, y="RMSE", data=predictions_test)
+        plt.xticks(rotation=90)
+        st.pyplot(plt)
+        st.markdown(imagedownload(plt,'plot-rmse-wide.pdf'), unsafe_allow_html=True)
 
-    with st.markdown('**Calculation time**'):
-        # Tall
-        predictions_test["Time Taken"] = [0 if i < 0 else i for i in predictions_test["Time Taken"] ]
-        plt.figure(figsize=(3, 9))
+        with st.markdown('**Calculation time**'):
+            # Tall
+            predictions_test["Time Taken"] = [0 if i < 0 else i for i in predictions_test["Time Taken"] ]
+            plt.figure(figsize=(3, 9))
+            sns.set_theme(style="whitegrid")
+            ax3 = sns.barplot(y=predictions_test.index, x="Time Taken", data=predictions_test)
+        st.markdown(imagedownload(plt,'plot-calculation-time-tall.pdf'), unsafe_allow_html=True)
+            # Wide
+        plt.figure(figsize=(9, 3))
         sns.set_theme(style="whitegrid")
-        ax3 = sns.barplot(y=predictions_test.index, x="Time Taken", data=predictions_test)
-    st.markdown(imagedownload(plt,'plot-calculation-time-tall.pdf'), unsafe_allow_html=True)
-        # Wide
-    plt.figure(figsize=(9, 3))
-    sns.set_theme(style="whitegrid")
-    ax3 = sns.barplot(x=predictions_test.index, y="Time Taken", data=predictions_test)
-    plt.xticks(rotation=90)
-    st.pyplot(plt)
-    st.markdown(imagedownload(plt,'plot-calculation-time-wide.pdf'), unsafe_allow_html=True)
+        ax3 = sns.barplot(x=predictions_test.index, y="Time Taken", data=predictions_test)
+        plt.xticks(rotation=90)
+        st.pyplot(plt)
+        st.markdown(imagedownload(plt,'plot-calculation-time-wide.pdf'), unsafe_allow_html=True)
+
+    if task=="Classification":
+        with st.markdown('**Accuracy**'):
+            # Tall
+            predictions_test["Accuracy"] = [0 if i < 0 else i for i in predictions_test["Accuracy"] ]
+    #         # Wide
+        plt.figure(figsize=(9, 3))
+        sns.set_theme(style="whitegrid")
+        ax1 = sns.barplot(x=predictions_test.index, y="Accuracy", data=predictions_test)
+        ax1.set(ylim=(0, 1))
+        plt.xticks(rotation=90)
+        st.pyplot(plt)
+        st.markdown(imagedownload(plt,'plot-acc.pdf'), unsafe_allow_html=True)
+
+        with st.markdown('**Balanced Accuracy**'):
+            # Tall
+            predictions_test["Balanced Accuracy"] = [0 if i < 0 else i for i in predictions_test["Balanced Accuracy"] ]
+    #         # Wide
+        plt.figure(figsize=(9, 3))
+        sns.set_theme(style="whitegrid")
+        ax1 = sns.barplot(x=predictions_test.index, y="Balanced Accuracy", data=predictions_test)
+        ax1.set(ylim=(0, 1))
+        plt.xticks(rotation=90)
+        st.pyplot(plt)
+        st.markdown(imagedownload(plt,'plot-bal_acc.pdf'), unsafe_allow_html=True)
+
+        with st.markdown('**F1 Score**'):
+            # Tall
+            predictions_test["F1 Score"] = [0 if i < 0 else i for i in predictions_test["F1 Score"] ]
+    #         # Wide
+        plt.figure(figsize=(9, 3))
+        sns.set_theme(style="whitegrid")
+        ax1 = sns.barplot(x=predictions_test.index, y="F1 Score", data=predictions_test)
+        ax1.set(ylim=(0, 1))
+        plt.xticks(rotation=90)
+        st.pyplot(plt)
+        st.markdown(imagedownload(plt,'plot-fsore.pdf'), unsafe_allow_html=True)
+
+        with st.markdown('**Calculation time**'):
+            # Tall
+            predictions_test["Time Taken"] = [0 if i < 0 else i for i in predictions_test["Time Taken"] ]
+            # Wide
+        plt.figure(figsize=(9, 3))
+        sns.set_theme(style="whitegrid")
+        ax3 = sns.barplot(x=predictions_test.index, y="Time Taken", data=predictions_test)
+        plt.xticks(rotation=90)
+        st.pyplot(plt)
+        st.markdown(imagedownload(plt,'plot-calculation-time.pdf'), unsafe_allow_html=True)
+
 
 # Download CSV data
 # https://discuss.streamlit.io/t/how-to-download-file-in-streamlit/1806
