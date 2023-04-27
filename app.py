@@ -118,10 +118,7 @@ def imagedownload(plt, filename):
 
 #---------------------------------#
 st.write("""
-# The Machine Learning Algorithm Comparison App
-
-In this implementation, the **lazypredict** library is used for building several machine learning models at once.
-
+# ML Algorithm Comparison Dashboard 
 """)
 
 #---------------------------------#
@@ -151,25 +148,14 @@ if uploaded_file is not None:
     build_model(df)
 else:
     st.info('Awaiting for CSV file to be uploaded.')
-    if st.button('Press to use Example Dataset'):
-        # Diabetes dataset
-        #diabetes = load_diabetes()
-        #X = pd.DataFrame(diabetes.data, columns=diabetes.feature_names)
-        #Y = pd.Series(diabetes.target, name='response')
-        #df = pd.concat( [X,Y], axis=1 )
-
-        #st.markdown('The Diabetes dataset is used as the example.')
-        #st.write(df.head(5))
-
-        # Boston housing dataset
-        boston = load_diabetes()
-        #X = pd.DataFrame(boston.data, columns=boston.feature_names)
-        #Y = pd.Series(boston.target, name='response')
-        X = pd.DataFrame(boston.data, columns=boston.feature_names).loc[:100] # FOR TESTING PURPOSE, COMMENT THIS OUT FOR PRODUCTION
-        Y = pd.Series(boston.target, name='response').loc[:100] # FOR TESTING PURPOSE, COMMENT THIS OUT FOR PRODUCTION
-        df = pd.concat( [X,Y], axis=1 )
-
-        st.markdown('The Boston housing dataset is used as the example.')
+    if st.button(f'Press to use Example Dataset for {task}'):
+        if task == 'Classification':
+          df = load_iris()
+          name = 'Iris'
+        else:
+          df = load_diabetes()
+          name = 'Diabetes'
+        st.markdown(f'The {name} dataset is used as the {task} task example.')
+        df = pd.DataFrame(df.data, columns=df.feature_names)
         st.write(df.head(5))
-
         build_model(df)
