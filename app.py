@@ -17,7 +17,14 @@ import io
 st.set_page_config(page_title='The Machine Learning Algorithm Comparison App',
     layout='wide')
 #---------------------------------#
+
 # Model building
+
+def plot_bins(df,bins):
+    plt.figure(figsize=(9, 3))
+    sns.set_theme(style="whitegrid")
+    ax5 = sns.histplot(x=df.columns[-1],data=df,bins=bins,color="#69b3a2")
+    return plt
 
 def build_model(df):
     X = df.iloc[:,:-1] # Using all column except for the last column as X
@@ -48,11 +55,8 @@ def build_model(df):
         reg = LazyRegressor(verbose=0,ignore_warnings=False, custom_metric=None)
         models_train,predictions_train = reg.fit(X_train, X_train, Y_train, Y_train)
         models_test,predictions_test = reg.fit(X_train, X_test, Y_train, Y_test)
-
         bins = st.slider('Number of bins:', 1, 100, 50, 1)
-        plt.figure(figsize=(9, 3))
-        sns.set_theme(style="whitegrid")
-        ax5 = sns.histplot(x=df.columns[-1],data=df,bins=bins,color="#69b3a2")
+        plt = plot_bins(df,bins)
         st.pyplot(plt)
         st.markdown(imagedownload(plt,'plot-targetDistribution.pdf'), unsafe_allow_html=True)
 
@@ -180,7 +184,7 @@ st.write("""
 """)
 
 #---------------------------------#
-# Sidebar - Collects user input features into dataframe
+# Sidebar - Collects user input features into dataframe   
 
 with st.sidebar.header('1. Choose your Task'):
     task = st.sidebar.radio('Task', ('Regression', 'Classification'), horizontal=True, label_visibility='collapsed')
@@ -207,6 +211,9 @@ def sklearn_to_df(sklearn_dataset):
 # Displays the dataset
 st.subheader('1. Dataset')
 
+if 'eg' not in st.session_state:
+    st.session_state.eg = False
+
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     st.markdown('**1.1. Glimpse of dataset**')
@@ -214,7 +221,8 @@ if uploaded_file is not None:
     build_model(df)
 else:
     st.info('Awaiting for CSV file to be uploaded.')
-    if st.button(f'Press to use Example Dataset for {task}'):
+    if st.button(f'Press to use Example Dataset for {task}') or st.session_state.eg:
+        st.session_state.eg = True
         if task == 'Classification':
           df = load_iris()
           print()
