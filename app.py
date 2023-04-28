@@ -67,14 +67,13 @@ def build_model(df):
         le.fit(Y)
         Y=le.transform(Y)
 
-    num_features=len(df.columns)
     st.subheader('2. EDA Report')
     with st.spinner('Wait for it...'):
         profile = pandas_profiling.ProfileReport(df)
         profile.to_file("report.html")
         HtmlFile = open("report.html", 'r', encoding='utf-8')
         source_code = HtmlFile.read() 
-        components.html(source_code, height=num_features*600)
+        components.html(source_code, height=5*600)
 
     st.subheader('3. Model Performance')
     with st.spinner('Wait for it...'):
