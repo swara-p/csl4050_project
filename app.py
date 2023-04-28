@@ -48,6 +48,15 @@ def build_model(df):
         reg = LazyRegressor(verbose=0,ignore_warnings=False, custom_metric=None)
         models_train,predictions_train = reg.fit(X_train, X_train, Y_train, Y_train)
         models_test,predictions_test = reg.fit(X_train, X_test, Y_train, Y_test)
+
+        bins = st.slider('Number of bins:', 1, 100, 50, 1)
+        plt.figure(figsize=(9, 3))
+        sns.set_theme(style="whitegrid")
+        ax5 = sns.histplot(x=df.columns[-1],data=df,bins=bins,color="#69b3a2")
+        st.pyplot(plt)
+        st.markdown(imagedownload(plt,'plot-targetDistribution.pdf'), unsafe_allow_html=True)
+
+
     elif task=="Classification":
         clf = LazyClassifier(verbose=0,ignore_warnings=True, custom_metric=None)
         models_train,predictions_train = clf.fit(X_train, X_train,  Y_train, Y_train)
@@ -69,49 +78,36 @@ def build_model(df):
         with st.markdown('**R-squared**'):
             # Tall
             predictions_test["R-Squared"] = [0 if i < 0 else i for i in predictions_test["R-Squared"] ]
-            plt.figure(figsize=(3, 9))
-            sns.set_theme(style="whitegrid")
-            ax1 = sns.barplot(y=predictions_test.index, x="R-Squared", data=predictions_test)
-            # ax1.set(xlim=(0, 1))
-        st.markdown(imagedownload(plt,'plot-r2-tall.pdf'), unsafe_allow_html=True)
-            # Wide
+
         plt.figure(figsize=(9, 3))
         sns.set_theme(style="whitegrid")
         ax1 = sns.barplot(x=predictions_test.index, y="R-Squared", data=predictions_test)
         ax1.set(ylim=(0, 1))
         plt.xticks(rotation=90)
         st.pyplot(plt)
-        st.markdown(imagedownload(plt,'plot-r2-wide.pdf'), unsafe_allow_html=True)
+        st.markdown(imagedownload(plt,'plot-r2.pdf'), unsafe_allow_html=True)
 
         with st.markdown('**RMSE (capped at 200)**'):
             # Tall
             predictions_test["RMSE"] = [200 if i > 200 else i for i in predictions_test["RMSE"] ]
-            plt.figure(figsize=(3, 9))
-            sns.set_theme(style="whitegrid")
-            ax2 = sns.barplot(y=predictions_test.index, x="RMSE", data=predictions_test)
-        st.markdown(imagedownload(plt,'plot-rmse-tall.pdf'), unsafe_allow_html=True)
             # Wide
         plt.figure(figsize=(9, 3))
         sns.set_theme(style="whitegrid")
         ax2 = sns.barplot(x=predictions_test.index, y="RMSE", data=predictions_test)
         plt.xticks(rotation=90)
         st.pyplot(plt)
-        st.markdown(imagedownload(plt,'plot-rmse-wide.pdf'), unsafe_allow_html=True)
+        st.markdown(imagedownload(plt,'plot-rmse.pdf'), unsafe_allow_html=True)
 
         with st.markdown('**Calculation time**'):
             # Tall
             predictions_test["Time Taken"] = [0 if i < 0 else i for i in predictions_test["Time Taken"] ]
-            plt.figure(figsize=(3, 9))
-            sns.set_theme(style="whitegrid")
-            ax3 = sns.barplot(y=predictions_test.index, x="Time Taken", data=predictions_test)
-        st.markdown(imagedownload(plt,'plot-calculation-time-tall.pdf'), unsafe_allow_html=True)
-            # Wide
+
         plt.figure(figsize=(9, 3))
         sns.set_theme(style="whitegrid")
         ax3 = sns.barplot(x=predictions_test.index, y="Time Taken", data=predictions_test)
         plt.xticks(rotation=90)
         st.pyplot(plt)
-        st.markdown(imagedownload(plt,'plot-calculation-time-wide.pdf'), unsafe_allow_html=True)
+        st.markdown(imagedownload(plt,'plot-calculation-time.pdf'), unsafe_allow_html=True)
 
     if task=="Classification":
         with st.markdown('**Accuracy**'):
@@ -132,8 +128,8 @@ def build_model(df):
     #         # Wide
         plt.figure(figsize=(9, 3))
         sns.set_theme(style="whitegrid")
-        ax1 = sns.barplot(x=predictions_test.index, y="Balanced Accuracy", data=predictions_test)
-        ax1.set(ylim=(0, 1))
+        ax2 = sns.barplot(x=predictions_test.index, y="Balanced Accuracy", data=predictions_test)
+        ax2.set(ylim=(0, 1))
         plt.xticks(rotation=90)
         st.pyplot(plt)
         st.markdown(imagedownload(plt,'plot-bal_acc.pdf'), unsafe_allow_html=True)
@@ -144,8 +140,8 @@ def build_model(df):
     #         # Wide
         plt.figure(figsize=(9, 3))
         sns.set_theme(style="whitegrid")
-        ax1 = sns.barplot(x=predictions_test.index, y="F1 Score", data=predictions_test)
-        ax1.set(ylim=(0, 1))
+        ax3 = sns.barplot(x=predictions_test.index, y="F1 Score", data=predictions_test)
+        ax3.set(ylim=(0, 1))
         plt.xticks(rotation=90)
         st.pyplot(plt)
         st.markdown(imagedownload(plt,'plot-fsore.pdf'), unsafe_allow_html=True)
@@ -156,7 +152,7 @@ def build_model(df):
             # Wide
         plt.figure(figsize=(9, 3))
         sns.set_theme(style="whitegrid")
-        ax3 = sns.barplot(x=predictions_test.index, y="Time Taken", data=predictions_test)
+        ax4 = sns.barplot(x=predictions_test.index, y="Time Taken", data=predictions_test)
         plt.xticks(rotation=90)
         st.pyplot(plt)
         st.markdown(imagedownload(plt,'plot-calculation-time.pdf'), unsafe_allow_html=True)
@@ -185,14 +181,17 @@ st.write("""
 
 #---------------------------------#
 # Sidebar - Collects user input features into dataframe
-with st.sidebar.header('1. Upload your CSV data'):
+
+with st.sidebar.header('1. Choose your Task'):
+    task = st.sidebar.radio('Task', ('Regression', 'Classification'), horizontal=True, label_visibility='collapsed')
+
+
+with st.sidebar.header('2. Upload your CSV data'):
     uploaded_file = st.sidebar.file_uploader("Upload your input CSV file", type=["csv"])
     st.sidebar.markdown("""
 [Example CSV input file](https://raw.githubusercontent.com/dataprofessor/data/master/delaney_solubility_with_descriptors.csv)
 """)
 
-with st.sidebar.header('2. Choose your Task'):
-    task = st.sidebar.radio('Task', ('Regression', 'Classification'), horizontal=True, label_visibility='collapsed')
 
 with st.sidebar.header('3. Set Parameters'):
     split_size = st.sidebar.slider('Data split ratio (% for Training Set)', 10, 90, 80, 5)
@@ -227,3 +226,4 @@ else:
         df = sklearn_to_df(df)
         st.write(df.head(5))
         build_model(df)
+
