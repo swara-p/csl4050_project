@@ -11,26 +11,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import base64
 import io
-#---------------------------------#
-# Page layout
-## Page expands to full width
-st.set_page_config(page_title='The Machine Learning Algorithm Comparison App',
-    layout='wide')
-#---------------------------------#
 
-# Model building
-
-def plot_bins(df,bins):
-    plt.figure(figsize=(9, 3))
-    sns.set_theme(style="whitegrid")
-    ax5 = sns.histplot(x=df.columns[-1],data=df,bins=bins,color="#69b3a2")
-    return plt
+st.set_page_config(page_title='DashML', layout='wide')
 
 def build_model(df):
-    X = df.iloc[:,:-1] # Using all column except for the last column as X
-    Y = df.iloc[:,-1] # Selecting the last column as Y
-
-
+    X = df.iloc[:,:-1] 
+    Y = df.iloc[:,-1] 
     st.markdown('**1.2. Dataset dimension**')
     st.write('X')
     st.info(X.shape)
@@ -43,7 +29,6 @@ def build_model(df):
     st.write('Y variable')
     st.info(Y.name)
 
-    # Build lazy model
     if task=="Classification":
         le=LabelEncoder()
         le.fit(Y)
@@ -56,7 +41,9 @@ def build_model(df):
         models_train,predictions_train = reg.fit(X_train, X_train, Y_train, Y_train)
         models_test,predictions_test = reg.fit(X_train, X_test, Y_train, Y_test)
         bins = st.slider('Number of bins:', 1, 100, 50, 1)
-        plt = plot_bins(df,bins)
+        plt.figure(figsize=(9, 3))
+        sns.set_theme(style="whitegrid")
+        ax5 = sns.histplot(x=df.columns[-1],data=df,bins=bins,color="#69b3a2")
         st.pyplot(plt)
         st.markdown(imagedownload(plt,'plot-targetDistribution.pdf'), unsafe_allow_html=True)
 
@@ -161,9 +148,6 @@ def build_model(df):
         st.pyplot(plt)
         st.markdown(imagedownload(plt,'plot-calculation-time.pdf'), unsafe_allow_html=True)
 
-
-# Download CSV data
-# https://discuss.streamlit.io/t/how-to-download-file-in-streamlit/1806
 def filedownload(df, filename):
     csv = df.to_csv(index=False)
     b64 = base64.b64encode(csv.encode()).decode()  # strings <-> bytes conversions
@@ -178,37 +162,22 @@ def imagedownload(plt, filename):
     href = f'<a href="data:image/png;base64,{b64}" download={filename}>Download {filename} File</a>'
     return href
 
-#---------------------------------#
-st.write("""
-# ML Algorithm Comparison Dashboard 
-""")
-
-#---------------------------------#
-# Sidebar - Collects user input features into dataframe   
-
-with st.sidebar.header('1. Choose your Task'):
-    task = st.sidebar.radio('Task', ('Regression', 'Classification'), horizontal=True, label_visibility='collapsed')
-
-
-with st.sidebar.header('2. Upload your CSV data'):
-    uploaded_file = st.sidebar.file_uploader("Upload your input CSV file", type=["csv"])
-    st.sidebar.markdown("""
-[Example CSV input file](https://raw.githubusercontent.com/dataprofessor/data/master/delaney_solubility_with_descriptors.csv)
-""")
-
-
-with st.sidebar.header('3. Set Parameters'):
-    split_size = st.sidebar.slider('Data split ratio (% for Training Set)', 10, 90, 80, 5)
-
-#---------------------------------#
-# Main panel
-
 def sklearn_to_df(sklearn_dataset):
     df = pd.DataFrame(sklearn_dataset.data, columns=sklearn_dataset.feature_names)
     df['target'] = pd.Series(sklearn_dataset.target)
     return df
 
-# Displays the dataset
+st.write("""# DashML: ML Algorithm Comparison Dashboard """)
+
+with st.sidebar.header('1. Choose your Task'):
+    task = st.sidebar.radio('Task', ('Regression', 'Classification'), horizontal=True, label_visibility='collapsed')
+
+with st.sidebar.header('2. Upload your CSV data'):
+    uploaded_file = st.sidebar.file_uploader("Upload your input CSV file", type=["csv"], label_visibility='collapsed')
+
+with st.sidebar.header('3. Set Parameters'):
+    split_size = st.sidebar.slider('Data split ratio (% for Training Set)', 10, 90, 80, 5)
+
 st.subheader('1. Dataset')
 
 if 'eg' not in st.session_state:
@@ -220,12 +189,14 @@ if uploaded_file is not None:
     st.write(df)
     build_model(df)
 else:
-    st.info('Awaiting for CSV file to be uploaded.')
-    if st.button(f'Press to use Example Dataset for {task}') or st.session_state.eg:
+    placeholder = st.empty()
+    with placeholder.container():
+        egg = st.button(f'Press to use Example Dataset for {task}')
+    if egg or st.session_state.eg:
         st.session_state.eg = True
+        placeholder.empty()
         if task == 'Classification':
           df = load_iris()
-          print()
           name = 'Iris'
         else:
           df = load_diabetes()
@@ -234,4 +205,3 @@ else:
         df = sklearn_to_df(df)
         st.write(df.head(5))
         build_model(df)
-
