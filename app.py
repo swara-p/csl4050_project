@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, roc_auc_score, roc_curve, f1_score, classification_report, confusion_matrix
-from sklearn.datasets import load_diabetes, load_iris
+from sklearn.datasets import load_diabetes, load_iris, load_breast_cancer
 import matplotlib.pyplot as plt
 import seaborn as sns
 import base64
@@ -200,6 +200,11 @@ with st.sidebar.header('3. Set Parameters'):
 #---------------------------------#
 # Main panel
 
+def sklearn_to_df(sklearn_dataset):
+    df = pd.DataFrame(sklearn_dataset.data, columns=sklearn_dataset.feature_names)
+    df['target'] = pd.Series(sklearn_dataset.target)
+    return df
+
 # Displays the dataset
 st.subheader('1. Dataset')
 
@@ -213,11 +218,12 @@ else:
     if st.button(f'Press to use Example Dataset for {task}'):
         if task == 'Classification':
           df = load_iris()
+          print()
           name = 'Iris'
         else:
           df = load_diabetes()
           name = 'Diabetes'
         st.markdown(f'The {name} dataset is used as the {task} task example.')
-        df = pd.DataFrame(df.data, columns=df.feature_names)
+        df = sklearn_to_df(df)
         st.write(df.head(5))
         build_model(df)
