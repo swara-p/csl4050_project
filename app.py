@@ -11,6 +11,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import base64
 import io
+import streamlit.components.v1 as components
+
+# from IPython.display import IFrame
+# # Generate the HTML report using pandas profiling
+import pandas_profiling
+
 #---------------------------------#
 # Page layout
 ## Page expands to full width
@@ -43,18 +49,22 @@ def build_model(df):
         Y=le.transform(Y)
 
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size = split_size)
+    num_features=len(df.columns)
+
+    profile = pandas_profiling.ProfileReport(df)
+    
+    profile.to_file("report.html")
+
+    HtmlFile = open("report.html", 'r', encoding='utf-8')
+    source_code = HtmlFile.read() 
+    # print(source_code)
+    components.html(source_code,height=num_features*600)
+
 
     if task=="Regression":
         reg = LazyRegressor(verbose=0,ignore_warnings=False, custom_metric=None)
         models_train,predictions_train = reg.fit(X_train, X_train, Y_train, Y_train)
         models_test,predictions_test = reg.fit(X_train, X_test, Y_train, Y_test)
-
-        bins = st.slider('Number of bins:', 1, 100, 50, 1)
-        plt.figure(figsize=(9, 3))
-        sns.set_theme(style="whitegrid")
-        ax5 = sns.histplot(x=df.columns[-1],data=df,bins=bins,color="#69b3a2")
-        st.pyplot(plt)
-        st.markdown(imagedownload(plt,'plot-targetDistribution.pdf'), unsafe_allow_html=True)
 
 
     elif task=="Classification":
@@ -202,6 +212,7 @@ with st.sidebar.header('3. Set Parameters'):
 # Displays the dataset
 st.subheader('1. Dataset')
 
+
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     st.markdown('**1.1. Glimpse of dataset**')
@@ -220,4 +231,9 @@ else:
         df = pd.DataFrame(np.c_[df.data,df.target], columns=df.feature_names+['target'])
         st.write(df.head(5))
         build_model(df)
+
+        
+
+
+
 
