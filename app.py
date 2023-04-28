@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, roc_auc_score, roc_curve, f1_score, classification_report, confusion_matrix
-from sklearn.datasets import load_diabetes, load_iris
+from sklearn.datasets import load_diabetes, load_iris, load_breast_cancer
 import matplotlib.pyplot as plt
 import seaborn as sns
 import base64
@@ -26,15 +26,21 @@ st.set_page_config(page_title='The Machine Learning Algorithm Comparison App',
 # Model building
 
 def build_model(df):
-    X = df.iloc[:,:-1] # Using all column except for the last column as X
-    Y = df.iloc[:,-1] # Selecting the last column as Y
-
+    X = df.iloc[:,:-1] 
+    Y = df.iloc[:,-1] 
 
     st.markdown('**1.2. Dataset dimension**')
-    st.write('X')
-    st.info(X.shape)
-    st.write('Y')
-    st.info(Y.shape)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size = split_size/100)
+
+    cols = st.columns(8, gap='small')
+    cols[0].markdown('***X_train***')
+    cols[1].write(X_train.shape)
+    cols[2].markdown('***X_test***')
+    cols[3].write(X_test.shape)
+    cols[4].markdown('***Y_train***')
+    cols[5].write(Y_train.shape)
+    cols[6].markdown('***Y_test***')
+    cols[7].write(Y_test.shape)
 
     st.markdown('**1.3. Variable details**:')
     st.write('X variable (first 20 are shown)')
@@ -42,13 +48,11 @@ def build_model(df):
     st.write('Y variable')
     st.info(Y.name)
 
-    # Build lazy model
     if task=="Classification":
         le=LabelEncoder()
         le.fit(Y)
         Y=le.transform(Y)
 
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size = split_size)
     num_features=len(df.columns)
 
     profile = pandas_profiling.ProfileReport(df)
@@ -167,9 +171,6 @@ def build_model(df):
         st.pyplot(plt)
         st.markdown(imagedownload(plt,'plot-calculation-time.pdf'), unsafe_allow_html=True)
 
-
-# Download CSV data
-# https://discuss.streamlit.io/t/how-to-download-file-in-streamlit/1806
 def filedownload(df, filename):
     csv = df.to_csv(index=False)
     b64 = base64.b64encode(csv.encode()).decode()  # strings <-> bytes conversions
@@ -184,43 +185,40 @@ def imagedownload(plt, filename):
     href = f'<a href="data:image/png;base64,{b64}" download={filename}>Download {filename} File</a>'
     return href
 
-#---------------------------------#
-st.write("""
-# ML Algorithm Comparison Dashboard 
-""")
+def sklearn_to_df(sklearn_dataset):
+    df = pd.DataFrame(sklearn_dataset.data, columns=sklearn_dataset.feature_names)
+    df['target'] = pd.Series(sklearn_dataset.target)
+    return df
 
-#---------------------------------#
-# Sidebar - Collects user input features into dataframe
+st.write("""# DashML: ML Algorithm Comparison Dashboard """)
 
 with st.sidebar.header('1. Choose your Task'):
     task = st.sidebar.radio('Task', ('Regression', 'Classification'), horizontal=True, label_visibility='collapsed')
 
-
 with st.sidebar.header('2. Upload your CSV data'):
-    uploaded_file = st.sidebar.file_uploader("Upload your input CSV file", type=["csv"])
-    st.sidebar.markdown("""
-[Example CSV input file](https://raw.githubusercontent.com/dataprofessor/data/master/delaney_solubility_with_descriptors.csv)
-""")
-
+    uploaded_file = st.sidebar.file_uploader("Upload your input CSV file", type=["csv"], label_visibility='collapsed')
 
 with st.sidebar.header('3. Set Parameters'):
     split_size = st.sidebar.slider('Data split ratio (% for Training Set)', 10, 90, 80, 5)
 
-#---------------------------------#
-# Main panel
-
-# Displays the dataset
 st.subheader('1. Dataset')
 
 
+if 'eg' not in st.session_state:
+    st.session_state.eg = False
+    
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     st.markdown('**1.1. Glimpse of dataset**')
     st.write(df)
     build_model(df)
 else:
-    st.info('Awaiting for CSV file to be uploaded.')
-    if st.button(f'Press to use Example Dataset for {task}'):
+    placeholder = st.empty()
+    with placeholder.container():
+        egg = st.button(f'Press to use Example Dataset for {task}')
+    if egg or st.session_state.eg:
+        st.session_state.eg = True
+        placeholder.empty()
         if task == 'Classification':
           df = load_iris()
           name = 'Iris'
@@ -228,7 +226,7 @@ else:
           df = load_diabetes()
           name = 'Diabetes'
         st.markdown(f'The {name} dataset is used as the {task} task example.')
-        df = pd.DataFrame(np.c_[df.data,df.target], columns=df.feature_names+['target'])
+        df = sklearn_to_df(df)
         st.write(df.head(5))
         build_model(df)
 
