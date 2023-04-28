@@ -17,11 +17,19 @@ st.set_page_config(page_title='DashML', layout='wide')
 def build_model(df):
     X = df.iloc[:,:-1] 
     Y = df.iloc[:,-1] 
+
     st.markdown('**1.2. Dataset dimension**')
-    st.write('X')
-    st.info(X.shape)
-    st.write('Y')
-    st.info(Y.shape)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size = split_size/100)
+
+    cols = st.columns(8, gap='small')
+    cols[0].markdown('***X_train***')
+    cols[1].write(X_train.shape)
+    cols[2].markdown('***X_test***')
+    cols[3].write(X_test.shape)
+    cols[4].markdown('***Y_train***')
+    cols[5].write(Y_train.shape)
+    cols[6].markdown('***Y_test***')
+    cols[7].write(Y_test.shape)
 
     st.markdown('**1.3. Variable details**:')
     st.write('X variable (first 20 are shown)')
@@ -34,7 +42,6 @@ def build_model(df):
         le.fit(Y)
         Y=le.transform(Y)
 
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size = split_size)
 
     if task=="Regression":
         reg = LazyRegressor(verbose=0,ignore_warnings=False, custom_metric=None)
