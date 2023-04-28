@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 from lazypredict.Supervised import LazyRegressor, LazyClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
@@ -33,7 +32,6 @@ def sklearn_to_df(sklearn_dataset):
     df['target'] = pd.Series(sklearn_dataset.target)
     return df
 
-# write code to normalize only the continuous features in the dataframe
 def normalize_df(X):
     for feature_name in X.columns:
         if X[feature_name].dtype != 'object':
