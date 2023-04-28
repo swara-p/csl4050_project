@@ -33,12 +33,34 @@ def sklearn_to_df(sklearn_dataset):
     df['target'] = pd.Series(sklearn_dataset.target)
     return df
 
+# write code to normalize only the continuous features in the dataframe
+def normalize_df(X):
+    for feature_name in X.columns:
+        if X[feature_name].dtype != 'object':
+            max_value = X[feature_name].max()
+            min_value = X[feature_name].min()
+            X[feature_name] = (X[feature_name] - min_value) / (max_value - min_value)
+
+def cat_to_num(df):
+    for col in df.columns:
+        if df[col].dtype == 'object':
+            le=LabelEncoder()
+            df[col] = le.fit_transform(df[col])
+
 def build_model(df):
-    X = df.iloc[:,:-1] 
+    cat_to_num(df)
+
     if target_col != '':
         Y = df[target_col]
+        X = df.drop(target_col, axis=1)
     else:
+        X = df.iloc[:,:-1] 
         Y = df.iloc[:,-1] 
+
+    if normalize==True:
+        normalize_df(X)
+        st.markdown('**1.1.a. Normalized Features**')
+        st.write(X.head(5))
 
     st.markdown('**1.2. Dataset dimension**')
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size = split_size/100)
@@ -61,11 +83,6 @@ def build_model(df):
     cols = st.columns([1,5], gap='small')
     cols[0].markdown('***Target (Y)***')
     cols[1].info(Y.name)
-
-    if task=="Classification":
-        le=LabelEncoder()
-        le.fit(Y)
-        Y=le.transform(Y)
 
     st.subheader('2. EDA Report')
     with st.spinner('Wait for it...'):
@@ -208,3 +225,12 @@ else:
         st.markdown('**1.1. Glimpse of dataset**')
         st.write(df.head(5))
         build_model(df)
+
+hide_streamlit_style = """
+            <style>
+             #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            </style>
+            """
+
+st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
